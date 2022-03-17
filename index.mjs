@@ -31,7 +31,7 @@ const BOOKINGS = {
 
 //if (process.env.ENABLE_EXPRESS === "1") {
 
-const app = express()
+const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
