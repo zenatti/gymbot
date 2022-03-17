@@ -1,19 +1,11 @@
 import 'dotenv/config'
 import {loginApp, selezionaSede, palinsesti, prenotazione} from './shaggyowl.mjs';
 import {format, addDays} from 'date-fns';
-//import NodeCache from 'node-cache';
-//const myCache = new NodeCache()
 import sgMail from '@sendgrid/mail';
 import express from 'express';
 
 // configure sendgrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
-/**
- *
- * @type {number}
- */
-const NEXT_DAY_TO_CHECK = 3;
 
 /**
  *
@@ -29,22 +21,16 @@ const BOOKINGS = {
     Sunday: []
 }
 
-if (process.env.ENABLE_EXPRESS === "1") {
+/**
+ *
+ * @type {number}
+ */
+const NEXT_DAY_TO_CHECK = process.env.NEXT_DAY_TO_CHECK || 1;
 
-    const app = express();
-    const port = process.env.PORT || 3000;
-
-    app.get('/', (req, res) => {
-        res.send(`Status: RUNNING`);
-    })
-
-    app.listen(port, () => {
-        console.log(`Gymbot running on port ${port}`);
-    });
-
-}
-
-if (process.env.ENABLE_BOOKING === "1") {
+/**
+ *
+ */
+const runBooker = async () => {
 
     let id_sede_selezionata = null;
 
@@ -147,4 +133,20 @@ if (process.env.ENABLE_BOOKING === "1") {
     }
 
 }
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/run-booker', async (req, res) => {
+    await runBooker();
+    res.send(`BOOKER LAUNCHED`);
+})
+
+app.get('/', (req, res) => {
+    res.send(`Status: RUNNING`);
+})
+
+app.listen(port, () => {
+    console.log(`Gymbot running on port ${port}`);
+});
 
