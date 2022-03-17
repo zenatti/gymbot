@@ -35,7 +35,7 @@ if (process.env.ENABLE_EXPRESS === "1") {
     const port = process.env.PORT || 3000;
 
     app.get('/', (req, res) => {
-        res.send(`Status`, `RUNNING`);
+        res.send(`Status: RUNNING`);
     })
 
     app.listen(port, () => {
