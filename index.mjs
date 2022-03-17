@@ -62,7 +62,7 @@ const runBooker = async () => {
         const body_palinsesti = await palinsesti(id_sede_selezionata, codice_sessione, data);
 
         // data da controllare (+3gg)
-        const data_to_check = format(addDays(new Date(), NEXT_DAY_TO_CHECK), 'yyyy-MM-dd');
+        const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
 
         // ciclo i giorni nel palinsesto (7)
         let giorni = Array.isArray(body_palinsesti?.parametri?.lista_risultati) ? body_palinsesti?.parametri?.lista_risultati[0]?.giorni : [];
