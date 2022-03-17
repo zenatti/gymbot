@@ -29,20 +29,20 @@ const BOOKINGS = {
     Sunday: []
 }
 
-//if (process.env.ENABLE_EXPRESS === "1") {
+if (process.env.ENABLE_EXPRESS === "1") {
 
-const app = express();
-const port = process.env.PORT || 3000;
+    const app = express();
+    const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
+    app.get('/', (req, res) => {
+        res.send(`Status`, `RUNNING`);
+    })
 
-app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-})
+    app.listen(port, () => {
+        console.log(`Gymbot running on port ${port}`);
+    });
 
-//}
+}
 
 if (process.env.ENABLE_BOOKING === "1") {
 
