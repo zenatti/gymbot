@@ -1,11 +1,17 @@
 import 'dotenv/config'
 import {loginApp, selezionaSede, palinsesti, prenotazione} from './shaggyowl.mjs';
-import {format, addDays} from 'date-fns';
+import {format, addDays, parse} from 'date-fns';
 import sgMail from '@sendgrid/mail';
 import express from 'express';
 
 // configure sendgrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+/**
+ * Polling MS
+ * @type {number}
+ */
+const POLLING_MS = process.env.POLLING_MS ? parseInt(process.env.POLLING_MS, 10) : 2 * 1000;
 
 /**
  *
@@ -19,13 +25,41 @@ const BOOKINGS = {
     Friday: ["18:00"],
     Saturday: ["10:00"],
     Sunday: []
-}
+};
 
 /**
  *
  * @type {number}
  */
-const NEXT_DAY_TO_CHECK = process.env.NEXT_DAY_TO_CHECK || 1;
+const NEXT_DAY_TO_CHECK = process.env.NEXT_DAY_TO_CHECK || "1";
+
+/**
+ * Controlla se si sta avvicindnado una prenotazione da fare
+ */
+let checkInterval = () => {
+
+    // data da controllare (+3gg)
+    const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
+    let booking_key = format(new Date(data_to_check), 'eeee');
+
+    // ciclo i bookigns per quella giornata
+    BOOKINGS[booking_key].forEach(async (b) => {
+
+        let bookHours = parse(b, 'HH:mm', new Date());
+        let nowHours = new Date();
+
+        let hours = Math.abs(bookHours - nowHours) / 36e5;
+        console.log("CHECK:", bookHours, nowHours, hours);
+
+        // poco prima e poco dopo lancio le chiamate
+        if (hours < 0.1) {
+            runBooker();
+        }
+
+    });
+
+}
+setInterval(checkInterval, POLLING_MS);
 
 /**
  *
@@ -34,14 +68,14 @@ const runBooker = async () => {
 
     let id_sede_selezionata = null;
 
-// login nell'app
+    // login nell'app
     const body_login = await loginApp(process.env.APP_USER, process.env.APP_PWD);
     let codice_sessione = body_login?.parametri?.sessione.codice_sessione;
 
     let sedi = body_login?.parametri?.sedi_collegate;
     let opifit = Array.isArray(sedi) ? sedi.find(s => s.nome === "Opifit") : null;
 
-// check sede trovata
+    // check sede trovata
     if (codice_sessione && opifit) {
 
         // la seleziono
@@ -87,7 +121,6 @@ const runBooker = async () => {
                             console.log("Prenoto:", allenamento.id_orario_palinsesto);
 
                             // prenota
-
                             const body_prenotazione = await prenotazione(id_sede_selezionata, codice_sessione, g.giorno, allenamento.id_orario_palinsesto);
                             if (body_prenotazione?.parametri?.prenotazione?.stato === '1') {
 

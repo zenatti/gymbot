@@ -4,7 +4,7 @@ const MOCK_DATA = {
     loginApp: false,
     selezionaSede: false,
     palinsesti: false,
-    prenotazione: true
+    prenotazione: false
 };
 
 /**
