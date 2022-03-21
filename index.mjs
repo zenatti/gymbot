@@ -11,6 +11,12 @@ process.env.TZ = 'Europe/Rome';
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 /**
+ *
+ * @type {number}
+ */
+const HOURS_LIMIT = 0.1;
+
+/**
  * Polling MS
  * @type {number}
  */
@@ -24,7 +30,7 @@ const BOOKINGS = {
     Monday: ["18:30"],
     Tuesday: [],
     Wednesday: ["18:30"],
-    Thursday: ["17:00"],
+    Thursday: [],
     Friday: ["18:00"],
     Saturday: ["10:00"],
     Sunday: []
@@ -35,6 +41,21 @@ const BOOKINGS = {
  * @type {number}
  */
 const NEXT_DAY_TO_CHECK = process.env.NEXT_DAY_TO_CHECK || "1";
+
+/**
+ *
+ * @param stato
+ * @returns {string}
+ */
+let getStatoText = (stato) => {
+    if (stato === '1') {
+        return 'Coda';
+    }
+    else if (stato === '2') {
+        return 'Lista';
+    }
+    return 'Sconosciuto (' + stato + ')';
+}
 
 /**
  * Controlla se si sta avvicindnado una prenotazione da fare
@@ -77,7 +98,7 @@ let checkInterval = () => {
         }
 
         // poco prima e poco dopo lancio le chiamate
-        if (hours < 0.1) {
+        if (hours < HOURS_LIMIT) {
             runBooker();
         }
 
@@ -109,8 +130,10 @@ const runBooker = async () => {
 
     }
 
-    console.log("Sessione:", codice_sessione);
-    console.log("Sede selezionata:", id_sede_selezionata);
+    if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+        console.log("Sessione:", codice_sessione);
+        console.log("Sede selezionata:", id_sede_selezionata);
+    }
 
     if (id_sede_selezionata && id_sede_selezionata === opifit.id_sede) {
 
@@ -132,7 +155,9 @@ const runBooker = async () => {
 
                 // prendo la chiave della mappa BOOKING (il weekday)
                 let booking_key = format(new Date(g.giorno), 'eeee');
-                console.log("Controllo:", g.giorno, booking_key);
+                if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+                    console.log("Controllo:", g.giorno, booking_key);
+                }
 
                 // ciclo i bookigns per quella giornata
                 BOOKINGS[booking_key].forEach(async (b) => {
@@ -143,16 +168,23 @@ const runBooker = async () => {
 
                         // controllo se già prenotato
                         if (allenamento.prenotazioni.utente_prenotato === '0') {
-                            console.log("Prenoto:", allenamento.id_orario_palinsesto);
+                            if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+                                console.log("Prenoto:", allenamento.id_orario_palinsesto);
+                            }
 
                             // prenota
                             const body_prenotazione = await prenotazione(id_sede_selezionata, codice_sessione, g.giorno, allenamento.id_orario_palinsesto);
-                            if (body_prenotazione?.parametri?.prenotazione?.stato === '1') {
+                            if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+                                console.log("Prenotazione:", body_prenotazione);
+                            }
+                            if (['1', '2'].indexOf(body_prenotazione?.parametri?.prenotazione?.stato)) {
 
                                 const bodyMail = `
                                     Prenotazione confermata per la lezione di <strong>${body_prenotazione?.parametri?.prenotazione?.nome_corso}</strong>
                                     del <strong>${body_prenotazione?.parametri?.prenotazione?.data}</strong>
                                     alle ore <strong>${body_prenotazione?.parametri?.prenotazione?.orario_inizio}</strong>.
+                                    <br />
+                                    Sei in <strong>${getStatoText(body_prenotazione?.parametri?.prenotazione?.stato)}</strong>
                                     <br />
                                     <br />
                                     ${body_prenotazione?.parametri?.frase}
@@ -161,17 +193,15 @@ const runBooker = async () => {
                                 sgMail.send({
                                     to: process.env.NOTIFICATIONS_MAIL,
                                     from: 'test@gymbot',
-                                    subject: `Notifica prenotazione ${process.env.BOT_ENV}`,
+                                    subject: `Notifica prenotazione: ${getStatoText(body_prenotazione?.parametri?.prenotazione?.stato)} (${process.env.BOT_ENV})`,
                                     text: bodyMail,
                                     html: bodyMail
-                                })
-                                      .then((response) => {
-                                          //console.log(response[0].statusCode)
-                                          //console.log(response[0].headers)
-                                      })
-                                      .catch((error) => {
-                                          //console.error(error)
-                                      });
+                                }).then((response) => {
+                                    //console.log(response[0].statusCode)
+                                    //console.log(response[0].headers)
+                                }).catch((error) => {
+                                    //console.error(error)
+                                });
 
                             }
 
