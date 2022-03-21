@@ -4,6 +4,9 @@ import {format, addDays, parse} from 'date-fns';
 import sgMail from '@sendgrid/mail';
 import express from 'express';
 
+// forze timezone
+process.env.TZ = 'Europe/Rome';
+
 // configure sendgrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
@@ -27,7 +30,7 @@ const BOOKINGS = {
     Monday: ["18:30"],
     Tuesday: [],
     Wednesday: ["18:30"],
-    Thursday: ["12:45"],
+    Thursday: ["17:00"],
     Friday: ["18:00"],
     Saturday: ["10:00"],
     Sunday: []
