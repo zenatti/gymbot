@@ -15,6 +15,12 @@ const POLLING_MS = process.env.POLLING_MS ? parseInt(process.env.POLLING_MS, 10)
 
 /**
  *
+ * @type {number}
+ */
+const POLLING_MS_DEBUG = process.env.POLLING_MS_DEBUG ? parseInt(process.env.POLLING_MS_DEBUG, 10) : 60 * 1000;
+
+/**
+ *
  * @type {object}
  */
 const BOOKINGS = {
@@ -49,7 +55,7 @@ let checkInterval = () => {
         let nowHours = new Date();
 
         let hours = Math.abs(bookHours - nowHours) / 36e5;
-        console.log("CHECK:", bookHours, nowHours, hours);
+        // console.log("CHECK:", bookHours, nowHours, hours);
 
         // poco prima e poco dopo lancio le chiamate
         if (hours < 0.1) {
@@ -60,6 +66,32 @@ let checkInterval = () => {
 
 }
 setInterval(checkInterval, POLLING_MS);
+
+/**
+ *
+ */
+let debugInterval = () => {
+
+    let bodyMail = `Debug Check Interval, I'm still alive!`;
+
+    const msg = {
+        to: process.env.NOTIFICATIONS_MAIL,
+        from: 'test@gymbot',
+        subject: 'Debug interval',
+        text: bodyMail,
+        html: bodyMail
+    }
+
+    sgMail.send(msg)
+          .then((response) => {
+              //console.log(response[0].statusCode)
+              //console.log(response[0].headers)
+          })
+          .catch((error) => {
+              //console.error(error)
+          });
+}
+setInterval(debugInterval, POLLING_MS_DEBUG);
 
 /**
  *
@@ -125,13 +157,13 @@ const runBooker = async () => {
                             if (body_prenotazione?.parametri?.prenotazione?.stato === '1') {
 
                                 let bodyMail = `
-                                Prenotazione confermata per la lezione di <strong>${body_prenotazione?.parametri?.prenotazione?.nome_corso}</strong>
-                                del <strong>${body_prenotazione?.parametri?.prenotazione?.data}</strong>
-                                alle ore <strong>${body_prenotazione?.parametri?.prenotazione?.orario_inizio}</strong>.
-                                <br />
-                                <br />
-                                ${body_prenotazione?.parametri?.frase}
-                            `;
+                                    Prenotazione confermata per la lezione di <strong>${body_prenotazione?.parametri?.prenotazione?.nome_corso}</strong>
+                                    del <strong>${body_prenotazione?.parametri?.prenotazione?.data}</strong>
+                                    alle ore <strong>${body_prenotazione?.parametri?.prenotazione?.orario_inizio}</strong>.
+                                    <br />
+                                    <br />
+                                    ${body_prenotazione?.parametri?.frase}
+                                `;
 
                                 const msg = {
                                     to: process.env.NOTIFICATIONS_MAIL,
