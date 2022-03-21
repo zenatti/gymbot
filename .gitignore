@@ -45,3 +45,6 @@ Thumbs.db
 
 # Env files
 .env
+
+# Cache
+.php_cs.cache

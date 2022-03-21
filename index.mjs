@@ -18,12 +18,6 @@ const POLLING_MS = process.env.POLLING_MS ? parseInt(process.env.POLLING_MS, 10)
 
 /**
  *
- * @type {number}
- */
-const POLLING_MS_DEBUG = process.env.POLLING_MS_DEBUG ? parseInt(process.env.POLLING_MS_DEBUG, 10) : 60 * 1000;
-
-/**
- *
  * @type {object}
  */
 const BOOKINGS = {
@@ -49,7 +43,7 @@ let checkInterval = () => {
 
     // data da controllare (+3gg)
     const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
-    let booking_key = format(new Date(data_to_check), 'eeee');
+    const booking_key = format(new Date(data_to_check), 'eeee');
 
     if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
         console.log("data_to_check", data_to_check);
@@ -62,31 +56,24 @@ let checkInterval = () => {
 
         let bookHours = parse(b, 'HH:mm', new Date());
         let nowHours = new Date();
-
         let hours = Math.abs(bookHours - nowHours) / 36e5;
+
+        // local debug
         if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
             console.log("CHECK:", bookHours, nowHours, hours);
         }
 
         if (process.env.BOT_DEBUG && process.env.BOT_DEBUG === "true") {
-
-            const bodyMail = `Debug Check Interval, Checking!<br /><br />${bookHours}<br />${nowHours}<br />${hours}`;
-
+            const bodyMail = `Debug Check Interval, Checking!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}<br /><br />${bookHours}<br />${nowHours}<br />${hours}`;
             sgMail.send({
                 to: process.env.NOTIFICATIONS_MAIL,
                 from: 'test@gymbot',
                 subject: `Debug interval ${process.env.BOT_ENV}`,
                 text: bodyMail,
                 html: bodyMail
-            })
-                  .then((response) => {
-                      //console.log(response[0].statusCode)
-                      //console.log(response[0].headers)
-                  })
-                  .catch((error) => {
-                      //console.error(error)
-                  });
-
+            }).then((response) => {
+            }).catch((error) => {
+            });
         }
 
         // poco prima e poco dopo lancio le chiamate
@@ -98,36 +85,6 @@ let checkInterval = () => {
 
 }
 setInterval(checkInterval, POLLING_MS);
-
-/**
- *
- */
-if (process.env.BOT_DEBUG && process.env.BOT_DEBUG === "true") {
-    let debugInterval = () => {
-
-        // data da controllare (+3gg)
-        const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
-        let booking_key = format(new Date(data_to_check), 'eeee');
-
-        const bodyMail = `Debug Check Interval, I'm still alive!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}`;
-
-        sgMail.send({
-            to: process.env.NOTIFICATIONS_MAIL,
-            from: 'test@gymbot',
-            subject: `Debug interval ${process.env.BOT_ENV}`,
-            text: bodyMail,
-            html: bodyMail
-        })
-              .then((response) => {
-                  //console.log(response[0].statusCode)
-                  //console.log(response[0].headers)
-              })
-              .catch((error) => {
-                  //console.error(error)
-              });
-    }
-    setInterval(debugInterval, POLLING_MS_DEBUG);
-}
 
 /**
  *
