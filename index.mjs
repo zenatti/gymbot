@@ -48,6 +48,12 @@ let checkInterval = () => {
     const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
     let booking_key = format(new Date(data_to_check), 'eeee');
 
+    if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+        console.log("data_to_check", data_to_check);
+        console.log("booking_key", booking_key);
+        console.log("bookings", BOOKINGS[booking_key]);
+    }
+
     // ciclo i bookigns per quella giornata
     BOOKINGS[booking_key].forEach(async (b) => {
 
@@ -55,7 +61,30 @@ let checkInterval = () => {
         let nowHours = new Date();
 
         let hours = Math.abs(bookHours - nowHours) / 36e5;
-        // console.log("CHECK:", bookHours, nowHours, hours);
+        if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+            console.log("CHECK:", bookHours, nowHours, hours);
+        }
+
+        if (process.env.BOT_DEBUG && process.env.BOT_DEBUG === "true") {
+
+            const bodyMail = `Debug Check Interval, Checking!<br /><br />${bookHours}<br />${nowHours}<br />${hours}`;
+
+            sgMail.send({
+                to: process.env.NOTIFICATIONS_MAIL,
+                from: 'test@gymbot',
+                subject: `Debug interval ${process.env.BOT_ENV}`,
+                text: bodyMail,
+                html: bodyMail
+            })
+                  .then((response) => {
+                      //console.log(response[0].statusCode)
+                      //console.log(response[0].headers)
+                  })
+                  .catch((error) => {
+                      //console.error(error)
+                  });
+
+        }
 
         // poco prima e poco dopo lancio le chiamate
         if (hours < 0.1) {
@@ -70,34 +99,32 @@ setInterval(checkInterval, POLLING_MS);
 /**
  *
  */
-let debugInterval = () => {
+if (process.env.BOT_DEBUG && process.env.BOT_DEBUG === "true") {
+    let debugInterval = () => {
 
-    // data da controllare (+3gg)
-    const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
-    let booking_key = format(new Date(data_to_check), 'eeee');
+        // data da controllare (+3gg)
+        const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
+        let booking_key = format(new Date(data_to_check), 'eeee');
 
-    let bodyMail = `Debug Check Interval, I'm still alive!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}`;
+        const bodyMail = `Debug Check Interval, I'm still alive!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}`;
 
-
-
-    const msg = {
-        to: process.env.NOTIFICATIONS_MAIL,
-        from: 'test@gymbot',
-        subject: 'Debug interval',
-        text: bodyMail,
-        html: bodyMail
+        sgMail.send({
+            to: process.env.NOTIFICATIONS_MAIL,
+            from: 'test@gymbot',
+            subject: `Debug interval ${process.env.BOT_ENV}`,
+            text: bodyMail,
+            html: bodyMail
+        })
+              .then((response) => {
+                  //console.log(response[0].statusCode)
+                  //console.log(response[0].headers)
+              })
+              .catch((error) => {
+                  //console.error(error)
+              });
     }
-
-    sgMail.send(msg)
-          .then((response) => {
-              //console.log(response[0].statusCode)
-              //console.log(response[0].headers)
-          })
-          .catch((error) => {
-              //console.error(error)
-          });
+    setInterval(debugInterval, POLLING_MS_DEBUG);
 }
-setInterval(debugInterval, POLLING_MS_DEBUG);
 
 /**
  *
@@ -162,7 +189,7 @@ const runBooker = async () => {
                             const body_prenotazione = await prenotazione(id_sede_selezionata, codice_sessione, g.giorno, allenamento.id_orario_palinsesto);
                             if (body_prenotazione?.parametri?.prenotazione?.stato === '1') {
 
-                                let bodyMail = `
+                                const bodyMail = `
                                     Prenotazione confermata per la lezione di <strong>${body_prenotazione?.parametri?.prenotazione?.nome_corso}</strong>
                                     del <strong>${body_prenotazione?.parametri?.prenotazione?.data}</strong>
                                     alle ore <strong>${body_prenotazione?.parametri?.prenotazione?.orario_inizio}</strong>.
@@ -171,15 +198,13 @@ const runBooker = async () => {
                                     ${body_prenotazione?.parametri?.frase}
                                 `;
 
-                                const msg = {
+                                sgMail.send({
                                     to: process.env.NOTIFICATIONS_MAIL,
                                     from: 'test@gymbot',
-                                    subject: 'Notifica prenotazione',
+                                    subject: `Notifica prenotazione ${process.env.BOT_ENV}`,
                                     text: bodyMail,
                                     html: bodyMail
-                                }
-
-                                sgMail.send(msg)
+                                })
                                       .then((response) => {
                                           //console.log(response[0].statusCode)
                                           //console.log(response[0].headers)
