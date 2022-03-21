@@ -27,7 +27,7 @@ const BOOKINGS = {
     Monday: ["18:30"],
     Tuesday: [],
     Wednesday: ["18:30"],
-    Thursday: [],
+    Thursday: ["12:45"],
     Friday: ["18:00"],
     Saturday: ["10:00"],
     Sunday: []
@@ -72,7 +72,13 @@ setInterval(checkInterval, POLLING_MS);
  */
 let debugInterval = () => {
 
-    let bodyMail = `Debug Check Interval, I'm still alive!`;
+    // data da controllare (+3gg)
+    const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
+    let booking_key = format(new Date(data_to_check), 'eeee');
+
+    let bodyMail = `Debug Check Interval, I'm still alive!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}`;
+
+
 
     const msg = {
         to: process.env.NOTIFICATIONS_MAIL,
