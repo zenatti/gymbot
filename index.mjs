@@ -11,10 +11,16 @@ process.env.TZ = 'Europe/Rome';
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 /**
- *
+ * Minlimit 3 sec
  * @type {number}
  */
-const HOURS_LIMIT = 0.1;
+const HOURS_MIN_LIMIT = 0.0008;
+
+/**
+ * Maxlimit 5 min
+ * @type {number}
+ */
+const HOURS_MAX_LIMIT = -0.0833;
 
 /**
  * Polling MS
@@ -77,7 +83,7 @@ let checkInterval = () => {
 
         let bookHours = parse(b, 'HH:mm', new Date());
         let nowHours = new Date();
-        let hours = Math.abs(bookHours - nowHours) / 36e5;
+        let hours = (bookHours - nowHours) / 36e5;
 
         // local debug
         if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
@@ -98,7 +104,7 @@ let checkInterval = () => {
         }
 
         // poco prima e poco dopo lancio le chiamate
-        if (hours < HOURS_LIMIT) {
+        if (hours <= HOURS_MIN_LIMIT && hours > HOURS_MAX_LIMIT) {
             runBooker();
         }
 
