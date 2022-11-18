@@ -1,8 +1,18 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import {loginApp, selezionaSede, palinsesti, prenotazione} from './shaggyowl.mjs';
 import {format, addDays, parse} from 'date-fns';
 import sgMail from '@sendgrid/mail';
-import express from 'express';
+//import express from 'express';
+import path from 'path';
+import {fileURLToPath} from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// console.log(__filename);
+// console.log(__dirname);
+
+dotenv.config({path: __dirname + "/.env"});
+console.log(process.env.SENDGRID_API_KEY);
 
 // forze timezone
 process.env.TZ = 'Europe/Rome';
