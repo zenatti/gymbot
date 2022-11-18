@@ -101,9 +101,9 @@ let checkInterval = async () => {
         }
 
         // poco prima e poco dopo lancio le chiamate
-        //if (hours <= HOURS_MIN_LIMIT && hours > HOURS_MAX_LIMIT) {
+        if ((process.env.SKIP_HOURS_LIMIT && process.env.SKIP_HOURS_LIMIT === "true") || (hours <= HOURS_MIN_LIMIT && hours > HOURS_MAX_LIMIT)) {
             await runBooker();
-        //}
+        }
 
     }
 
@@ -212,7 +212,9 @@ const runBooker = async () => {
 
                         }
                         else {
-                            console.log("Già Prenotato:", allenamento.id_orario_palinsesto);
+                            if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+                                console.log("Già Prenotato:", allenamento.id_orario_palinsesto);
+                            }
                         }
 
                     }
@@ -228,20 +230,20 @@ const runBooker = async () => {
 checkInterval();
 
 /*
-const app = express();
-const port = process.env.PORT || 3000;
+ const app = express();
+ const port = process.env.PORT || 3000;
 
-app.get('/run-booker', async (req, res) => {
-    await runBooker();
-    res.send(`BOOKER LAUNCHED`);
-})
+ app.get('/run-booker', async (req, res) => {
+ await runBooker();
+ res.send(`BOOKER LAUNCHED`);
+ })
 
-app.get('/', (req, res) => {
-    res.send(`Status: RUNNING`);
-})
+ app.get('/', (req, res) => {
+ res.send(`Status: RUNNING`);
+ })
 
-app.listen(port, () => {
-    console.log(`Gymbot running on port ${port}`);
-});
+ app.listen(port, () => {
+ console.log(`Gymbot running on port ${port}`);
+ });
 
  */
