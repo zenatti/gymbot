@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 // console.log(__dirname);
 
 dotenv.config({path: __dirname + "/.env"});
-console.log(process.env.SENDGRID_API_KEY);
+//console.log(process.env.SENDGRID_API_KEY);
 
 // forze timezone
 process.env.TZ = 'Europe/Rome';
