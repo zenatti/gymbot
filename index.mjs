@@ -11,7 +11,7 @@ process.env.TZ = 'Europe/Rome';
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 /**
- * Minlimit 3 sec
+ * Minlimit 0 sec
  * @type {number}
  */
 const HOURS_MIN_LIMIT = 0.0008;
@@ -23,12 +23,6 @@ const HOURS_MIN_LIMIT = 0.0008;
 const HOURS_MAX_LIMIT = -0.0833;
 
 /**
- * Polling MS
- * @type {number}
- */
-const POLLING_MS = process.env.POLLING_MS ? parseInt(process.env.POLLING_MS, 10) : 2 * 1000;
-
-/**
  *
  * @type {object}
  */
@@ -36,7 +30,7 @@ const BOOKINGS = {
     Monday: ["18:30"],
     Tuesday: [],
     Wednesday: ["18:30"],
-    Thursday: [],
+    Thursday: ["18:00"],
     Friday: ["18:00"],
     Saturday: ["10:00"],
     Sunday: []
@@ -66,7 +60,10 @@ let getStatoText = (stato) => {
 /**
  * Controlla se si sta avvicindnado una prenotazione da fare
  */
-let checkInterval = () => {
+let checkInterval = async () => {
+    if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+        console.log("RUN: checkInterval");
+    }
 
     // data da controllare (+3gg)
     const data_to_check = format(addDays(new Date(), parseInt(NEXT_DAY_TO_CHECK, 10)), 'yyyy-MM-dd');
@@ -78,8 +75,8 @@ let checkInterval = () => {
         console.log("bookings", BOOKINGS[booking_key]);
     }
 
-    // ciclo i bookigns per quella giornata
-    BOOKINGS[booking_key].forEach(async (b) => {
+    // ciclo i bookings per quella giornata
+    for await (const b of BOOKINGS[booking_key]) {
 
         let bookHours = parse(b, 'HH:mm', new Date());
         let nowHours = new Date();
@@ -94,7 +91,7 @@ let checkInterval = () => {
             const bodyMail = `Debug Check Interval, Checking!<br /><br />${JSON.stringify(BOOKINGS)}<br />${data_to_check}<br />${booking_key}<br /><br />${bookHours}<br />${nowHours}<br />${hours}`;
             sgMail.send({
                 to: process.env.NOTIFICATIONS_MAIL,
-                from: 'test@gymbot',
+                from: 'test@gymbot.pigmentolab.net',
                 subject: `Debug interval ${process.env.BOT_ENV}`,
                 text: bodyMail,
                 html: bodyMail
@@ -104,19 +101,21 @@ let checkInterval = () => {
         }
 
         // poco prima e poco dopo lancio le chiamate
-        if (hours <= HOURS_MIN_LIMIT && hours > HOURS_MAX_LIMIT) {
-            runBooker();
-        }
+        //if (hours <= HOURS_MIN_LIMIT && hours > HOURS_MAX_LIMIT) {
+            await runBooker();
+        //}
 
-    });
+    }
 
 }
-setInterval(checkInterval, POLLING_MS);
 
 /**
  *
  */
 const runBooker = async () => {
+    if (process.env.BOT_ENV && process.env.BOT_ENV === "local") {
+        console.log("RUN: runBooker");
+    }
 
     let id_sede_selezionata = null;
 
@@ -168,7 +167,7 @@ const runBooker = async () => {
                 // ciclo i bookigns per quella giornata
                 BOOKINGS[booking_key].forEach(async (b) => {
 
-                    // cerco un allenamento che corriposnda alla data di inizio
+                    // cerco un allenamento che corrisponda alla data di inizio
                     let allenamento = g.orari_giorno.find(t => t.orario_inizio === b);
                     if (allenamento && allenamento.is_online === '1') {
 
@@ -198,7 +197,7 @@ const runBooker = async () => {
 
                                 sgMail.send({
                                     to: process.env.NOTIFICATIONS_MAIL,
-                                    from: 'test@gymbot',
+                                    from: 'test@gymbot.pigmentolab.net',
                                     subject: `Notifica prenotazione: ${getStatoText(body_prenotazione?.parametri?.prenotazione?.stato)} (${process.env.BOT_ENV})`,
                                     text: bodyMail,
                                     html: bodyMail
@@ -226,6 +225,9 @@ const runBooker = async () => {
 
 }
 
+checkInterval();
+
+/*
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -242,3 +244,4 @@ app.listen(port, () => {
     console.log(`Gymbot running on port ${port}`);
 });
 
+ */
