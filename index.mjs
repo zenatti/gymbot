@@ -38,7 +38,7 @@ const HOURS_MAX_LIMIT = -0.0833;
  */
 const BOOKINGS = {
     Monday: ["18:30"],
-    Tuesday: [],
+    Tuesday: ["18:00"],
     Wednesday: ["18:30"],
     Thursday: ["18:00"],
     Friday: ["18:00"],
